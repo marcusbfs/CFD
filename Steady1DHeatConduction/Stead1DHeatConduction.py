@@ -46,9 +46,9 @@ class SteadyHeatConduction1DWithUniformSource:
             self.x, self.a, self.b, self.c, self.d, self.TA, self.TB, self.S, self.k
         )
 
-    def solveAndPlot1D(self):
+    def solveAndPlot1D(self, A=True):
         self.solve()
-        self.plot1D()
+        self.plot1D(A)
 
     def solveAndPlot2D(self):
         self.solve()
@@ -68,6 +68,13 @@ class SteadyHeatConduction1DWithUniformSource:
         self.solve()
         self.plot1D(True)
 
+    def plot1D(self, plotExAnalytic=True):
+        fig, ax = plt.subplots()
+        self._create1Dplot(fig, ax, plotExAnalytic)
+
+        # Plot 2d
+        plt.show()
+
     def plot2D(self, W: float = 1.0, nw: int = 10):
         # Cria plano quadrado
         w = np.linspace(0, W, nw)
@@ -78,25 +85,44 @@ class SteadyHeatConduction1DWithUniformSource:
             Z[i, :] = self.T[:]
 
         fig, ax = plt.subplots()
+        self._create2Dplot(fig, ax, X, Y, Z, w)
+        plt.show()
+
+    def plot1DAnd2D(self, W: float = 1.0, nw: int = 10):
+        fig, axes = plt.subplots(2)
+        self._create1Dplot(fig, axes[0], False)
+
+        w = np.linspace(0, W, nw)
+        X, Y = np.meshgrid(self.x, w)
+        Z = np.zeros(np.shape(X))
+
+        for i in range(nw):
+            Z[i, :] = self.T[:]
+
+        self._create2Dplot(fig, axes[1], X, Y, Z, w)
+
+        for ax in axes:
+            ax.set_ylim(self.x.min(), self.x.max())
+
+        plt.show()
+
+    def _create2Dplot(self, fig, ax, X, Y, Z, w):
 
         c = ax.pcolormesh(
             X, Y, Z, cmap="RdBu", vmin=np.min(self.T), vmax=np.max(self.T)
         )
         ax.axis([self.x.min(), self.x.max(), w.min(), w.max()])
         fig.colorbar(c, ax=ax)
-        plt.show()
 
-    def plot1D(self, plotExAnalytic=False):
-        fig, ax = plt.subplots()
+    def _create1Dplot(self, fig, ax, plotA):
 
         n_func = 100
         n = self.N
 
-        x_analitic = np.linspace(0, self.L, n_func)
-        T_analitic = self._AnalyticExFunc(x_analitic)
-
-        if plotExAnalytic:
+        if plotA:
             # Plot 1d - Comparar com solução analítica
+            x_analitic = np.linspace(0, self.L, n_func)
+            T_analitic = self._AnalyticExFunc(x_analitic)
             ax.plot(
                 x_analitic,
                 T_analitic,
@@ -118,9 +144,6 @@ class SteadyHeatConduction1DWithUniformSource:
         ax.set_ylabel("T [ºC]")
         ax.grid()
         ax.legend()
-
-        # Plot 2d
-        plt.show()
 
     def _updateAll(self):
         self._updateArrays()
@@ -148,7 +171,8 @@ class SteadyHeatConduction1DWithUniformSource:
         self.T = np.zeros(self.N, dtype=np.float64)
 
     def _AnalyticExFunc(self, x: float):
-        return 100 + 800 * x
+        C1 = (self.TB - self.TA + self.S * self.L ** 2 * 0.5 / self.k) / self.L
+        return -self.S * x ** 2 * 0.5 / self.k + C1 * x + self.TA
 
 
 # ================================================================= #
@@ -205,6 +229,6 @@ def _finite_volume_ex(x, a, b, c, d, TA, TB, S, k):
 
 if __name__ == "__main__":
     m = SteadyHeatConduction1DWithUniformSource()
-    m.plot1DEx()
     m.setPointsNumber(100)
-    m.solveAndPlot2D()
+    m.solve()
+    m.plot1DAnd2D()
