@@ -2,7 +2,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import numba
-from scipy.interpolate import griddata
 
 
 class SteadyHeatConduction1DWithUniformSource:
@@ -16,6 +15,7 @@ class SteadyHeatConduction1DWithUniformSource:
         self.k = 1  # Condutividade térmica, W/m.K
         self.S = 0.0  # Termo fonte, W/m^3
         self.N = 7  # Número de pontos
+        self.setPointsNumber(self.N)
 
         self.TA = 100  # Temperatura no começo da barra, ºC
         self.TB = 500  # Temperatura no final da barra, ºC
@@ -23,9 +23,19 @@ class SteadyHeatConduction1DWithUniformSource:
 
     def setPointsNumber(self, N: int):
         self.N = N
+        self.x = np.linspace(
+            0, self.L, self.N, dtype=np.float64
+        )  # posições igualmente espaçadas
 
     def setPointsDistance(self, l: float):
         self.N = int(self.L / l)
+        self.x = np.linspace(
+            0, self.L, self.N, dtype=np.float64
+        )  # posições igualmente espaçadas
+
+    def setX(self, x):
+        self.x = np.asarray(x)
+        self.N = len(x)
 
     def setLength(self, L: float):
         self.L = L
@@ -161,9 +171,6 @@ class SteadyHeatConduction1DWithUniformSource:
         self.d[n - 1] = self.TB
 
     def _updateArrays(self):
-        self.x = np.linspace(
-            0, self.L, self.N, dtype=np.float64
-        )  # posições igualmente espaçadas
         self.a = np.zeros(self.N, dtype=np.float64)
         self.b = np.zeros(self.N, dtype=np.float64)
         self.c = np.zeros(self.N, dtype=np.float64)
