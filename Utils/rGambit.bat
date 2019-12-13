@@ -1,11 +1,4 @@
 @echo off
-REM #############################################
-REM # Data da criação da script: 03/10/2019	#
-REM # Autor: Marcus Bruno - marcusbfs@gmail.com	#
-REM # Modificado em: 05/10/2019	#
-REM #############################################
-
-REM ## Ps: O script atual só funciona se a linguagem do sistema estiver em português!
 
 REM === Variáveis ===
 SET gambit_exe=C:\Fluent.Inc\ntbin\ntx86\gambit.exe
@@ -20,11 +13,34 @@ ECHO.
 ECHO ###############################################
 ECHO #  Data da criacao da script: 03/10/2019      #
 ECHO #  Autor: Marcus Bruno - marcusbfs@gmail.com  #
-ECHO #  Modificado em: 05/10/2019                  #
+ECHO #  Versao 1.0.0                               #
+ECHO #  Modificado em: 13/12/2019                  #
 ECHO ###############################################
 ECHO.
 ECHO ## Ps: O script atual so funciona se a linguagem do sistema estiver em portugues!
 ECHO.
+
+
+REM === Checa se o script esta sendo executado como administrador
+goto check_Permissions
+
+:check_Permissions
+	ECHO O script requer privilegios de administrador para poder alterar a data.
+	ECHO Verificando permissoes...
+
+    net session >nul 2>&1
+    IF NOT %errorLevel% == 0 (
+        ECHO Permissoes negadas.
+	ECHO.
+	Echo Por favor, execute novamente como administrador.
+	ECHO.
+	ECHO Botao direito no script e "Executar como administrador"
+        PAUSE>nul
+	exit /b
+    ) ELSE (
+	ECHO Permissoes confirmadas.
+	ECHO.
+    )
 
 REM === Checa se o caminho do Gambit é válido
 IF NOT EXIST %gambit_exe% (
@@ -96,7 +112,9 @@ IF %fechar_exceed_apos_gambit%==1 (
 	if %number_gambit_process% NEQ 0 GOTO :loopExceed
 
 	ECHO Nenhuma instancia do Gambit sendo executada
-	
+	ECHO.
+	ECHO Por favor, espere o script ser finalizado automaticamente!
+	ECHO.
 	ping 127.0.0.1 -n %tempo_de_espera% > nul
 	TASKKILL /IM %exceed_exe_tasklist% 2> NUL
 	TASKKILL /IM %exceed_exe_tasklist% 2> NUL
