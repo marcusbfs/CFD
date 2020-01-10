@@ -1,0 +1,18 @@
+REMOVE HUMMINGBIRD NEIGHBORHOOD FROM DESKTOP
+(source: https://doganay.wordpress.com/2012/06/28/remove-hummingbird-neighborhood-from-desktop/)
+
+Open this file with a text editor:
+
+C:\Program Files\Hummingbird\Connectivity\*\Default User\Registry\HN_Desktop.humreg
+
+note that reg key. (ex: {DB8DC413-C0AA-11D0-9545-080009B1C2F3})
+
+start-->run-->regedit
+
+go to [HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop]
+
+rename directory that named reg key above {DB8..
+
+go to your desktop
+
+hit F5
