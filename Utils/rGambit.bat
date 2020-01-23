@@ -7,8 +7,8 @@ REM === Variaveis ===
 SET gambit_exe=C:\Fluent.Inc\ntbin\ntx86\gambit.exe
 SET fechar_exceed_apos_gambit=1
 SET fechar_launcher_apos_gambit=1
-SET tempo_de_espera=7
-SET tempo_de_espera_no_loop=3
+SET tempo_de_espera_apos_launcher=7
+SET tempo_de_espera_para_fechar_exceed=3
 
 REM #########################################
 
@@ -16,8 +16,8 @@ ECHO.
 ECHO ###############################################
 ECHO #  Data da criacao da script: 03/10/2019      #
 ECHO #  Autor: Marcus Bruno - marcusbfs@gmail.com  #
-ECHO #  Versao 1.1.0                               #
-ECHO #  Modificado em: 19/12/2019                  #
+ECHO #  Versao 1.2.0                               #
+ECHO #  Modificado em: 23/01/2020                  #
 ECHO ###############################################
 ECHO.
 ECHO ## Qualquer bug ou recomendacao, nao hesite em mandar um e-mail!
@@ -62,6 +62,8 @@ SET gambitdate=01-01-2007
 SET gambit_cmd=%gambit_exe% -r2.4.6
 SET gambit_exe_tasklist=gambit.exe
 SET exceed_exe_tasklist=exceed.exe
+SET pequeno_tempo_de_espera=0.5
+SET tempo_de_espera_para_finalizar_script=2
 
 REM === Salva data atual ===
 FOR /F "skip=1" %%x in ('wmic os get localdatetime') do if not defined MyDate set MyDate=%%x
@@ -69,14 +71,14 @@ SET data_atual=%MyDate:~6,2%-%MyDate:~4,2%-%MyDate:~0,4%
 
 REM === Muda data para %gambitdate% ===
 date %gambitdate%
-echo Data modificada para "%gambitdate%"
+ECHO Data modificada para "%gambitdate%"
 ECHO.
 
 cd %diretorio_atual%
 
 REM === Abre o Gambit ===
 REM Abre o Launcher do Gambit
-echo Abrindo Gambit...
+ECHO Abrindo Gambit...
 START /B %gambit_cmd%
 REM Pega processo desse Gambit
 FOR /F "tokens=2" %%p in ('tasklist^|find /i "%gambit_exe_tasklist%"') DO SET launcher_pid=%%p
@@ -84,12 +86,12 @@ FOR /F "tokens=2" %%p in ('tasklist^|find /i "%gambit_exe_tasklist%"') DO SET la
 REM Espera o gambit de fato ser iniciado 
 :loop
 	FOR /F "" %%x IN ('tasklist^|find /I /C "%gambit_exe_tasklist%"') do set number_gambit_process=%%x
-	REM ping 127.0.0.1 -n %tempo_de_espera_no_loop% > nul
-	ping 127.0.0.1 -n 0.5 > nul
+	REM ping 127.0.0.1 -n %tempo_de_espera_apos_launcher% > nul
+	ping 127.0.0.1 -n %pequeno_tempo_de_espera% > nul
 	if %number_gambit_process%==0 (
 		ECHO Launcher do Gambit foi finalizado pelo usuario
 		date %data_atual%
-		echo Data retornada para "%data_atual%"
+		ECHO Data retornada para "%data_atual%"
 		EXIT /B
 	)
 	if %number_gambit_process% LSS 2 GOTO :loop
@@ -100,24 +102,26 @@ REM #########################################
 REM Pega processo desse Exceed
 FOR /F "tokens=2" %%p in ('tasklist^|find /i "%exceed_exe_tasklist%"') DO SET exceed_pid=%%p
 
+REM === Retorna data atual ===
+date %data_atual%
+ECHO Data retornada para "%data_atual%"
+ECHO.
+
 IF %fechar_launcher_apos_gambit%==1 (
+	ping 127.0.0.1 -n %tempo_de_espera_apos_launcher% > nul
 	TASKKILL /F /PID %launcher_pid% 
 	TASKKILL /F /PID %launcher_pid% 2> NUL
 	ECHO Launcher do Gambit finalizado
 	ECHO.
 )
 
-REM === Retorna data atual ===
-date %data_atual%
-ECHO Data retornada para "%data_atual%"
-ECHO.
-
-REM === Fecha Exceed apos Gambit ser terminado, caso o usu�rio queira ===
+REM === Fecha Exceed apos Gambit ser terminado, caso o usuario queira ===
 IF %fechar_exceed_apos_gambit%==1 (
 	ECHO Vigiando Gambit para poder finalizar Exceed com seguranca...
 	:loopExceed
 		FOR /F "" %%x IN ('tasklist^|find /I /C "%gambit_exe_tasklist%"') do set number_gambit_process=%%x
-		ping 127.0.0.1 -n %tempo_de_espera_no_loop% > nul
+		ping 127.0.0.1 -n %tempo_de_espera_para_fechar_exceed% > nul
+		ping 127.0.0.1 -n %pequeno_tempo_de_espera% > nul
 		if %number_gambit_process% NEQ 0 GOTO :loopExceed
 
 	ECHO Nenhuma instancia do Gambit sendo executada
@@ -131,4 +135,4 @@ IF %fechar_exceed_apos_gambit%==1 (
 
 ECHO.
 ECHO Script finalizado com sucesso
-ping 127.0.0.1 -n 3 > nul
+ping 127.0.0.1 -n %tempo_de_espera_para_finalizar_script% > nul
