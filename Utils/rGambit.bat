@@ -14,7 +14,7 @@ REM #########################################
 
 ECHO.
 ECHO ###############################################
-ECHO #  Data da criacao da script: 03/10/2019      #
+ECHO #  Data da criacao do script: 03/10/2019      #
 ECHO #  Autor: Marcus Bruno - marcusbfs@gmail.com  #
 ECHO #  Versao 1.2.0                               #
 ECHO #  Modificado em: 23/01/2020                  #
@@ -83,7 +83,7 @@ START /B %gambit_cmd%
 REM Pega processo desse Gambit
 FOR /F "tokens=2" %%p in ('tasklist^|find /i "%gambit_exe_tasklist%"') DO SET launcher_pid=%%p
 
-REM Espera o gambit de fato ser iniciado 
+REM Espera o gambit de fato ser iniciado
 :loop
 	FOR /F "" %%x IN ('tasklist^|find /I /C "%gambit_exe_tasklist%"') do set number_gambit_process=%%x
 	REM ping 127.0.0.1 -n %tempo_de_espera_apos_launcher% > nul
@@ -109,7 +109,7 @@ ECHO.
 
 IF %fechar_launcher_apos_gambit%==1 (
 	ping 127.0.0.1 -n %tempo_de_espera_apos_launcher% > nul
-	TASKKILL /F /PID %launcher_pid% 
+	TASKKILL /F /PID %launcher_pid%
 	TASKKILL /F /PID %launcher_pid% 2> NUL
 	ECHO Launcher do Gambit finalizado
 	ECHO.
@@ -128,7 +128,7 @@ IF %fechar_exceed_apos_gambit%==1 (
 	ECHO.
 	ECHO Por favor, espere o script ser finalizado automaticamente!
 	ECHO.
-	TASKKILL /F /PID %exceed_pid% 
+	TASKKILL /F /PID %exceed_pid%
 	TASKKILL /F /PID %exceed_pid% 2> NUL
 	ECHO Exceed finalizado
 )
