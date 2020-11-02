@@ -2,6 +2,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import numba
+import fmodel
+import time
+import timeit
 
 
 class SteadyHeatConduction1DWithUniformSource:
@@ -9,6 +12,7 @@ class SteadyHeatConduction1DWithUniformSource:
         self.setupExample()
         self.DotColor = "yellow"
         self.LineColor = "red"
+        self.use_fotran = False
 
     def setupExample(self):
         self.L = 0.5  # Comprimento da barra, metros
@@ -52,9 +56,20 @@ class SteadyHeatConduction1DWithUniformSource:
 
     def solve(self):
         self._updateAll()
+        if self.use_fotran:
+            self.solveFortran()
+            return
+
         self.T = _finite_volume_ex(
             self.x, self.a, self.b, self.c, self.d, self.TA, self.TB, self.S, self.k
         )
+
+    def solveFortran(self):
+        self.T = fmodel.finite_volume_example(self.x, self.TA, self.TB, self.S, self.k)
+
+
+    def setUseFortran(self, useFortran : bool) -> None:
+        self.use_fotran = useFortran
 
     def solveAndPlot1D(self, A=True):
         self.solve()
@@ -236,6 +251,23 @@ def _finite_volume_ex(x, a, b, c, d, TA, TB, S, k):
 
 if __name__ == "__main__":
     m = SteadyHeatConduction1DWithUniformSource()
-    m.setPointsNumber(100)
+    n = 100000000
+
+    print("n = ", n)
+    m.setPointsNumber(n)
+
+    print("Solve")
+    t0 = time.time()
     m.solve()
-    m.plot1DAnd2D()
+    t1 = time.time()
+    t_normal = t1 - t0
+
+    print("Time = {:.10f} ms".format(1e3*(t_normal)))
+
+    print("Solve Fortran")
+    t0 = time.time()
+    m.solveFortran()
+    t1 = time.time()
+    t_for = t1-t0
+
+    print("Time = {:.10f} ms".format(1e3*(t_for)))
