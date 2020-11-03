@@ -1,53 +1,60 @@
-subroutine finite_volume_example(x,TA, TB, S, k, T, n)
+module types
+
+implicit none
+integer, parameter :: sp = selected_real_kind(6,37) ! single precision
+integer, parameter :: dp = selected_real_kind(15,307) ! double precision
+
+real(sp) :: r_sp = 1.0
+real(dp) :: r_dp = 1.0_dp
+
+end module
+
+
+module fmodel
+    contains
+subroutine finite_volume_example( x1, x2,TA, TB, S, k, T, n)
+    use types
     implicit none
     integer, intent(in)   :: n
-    real(8), intent(inout)  :: x(n)
-    real(8), intent(out) :: T(n)
-    real(8), intent(in) ::TA, TB, S, k
+    real(dp), intent(out) :: T(n)
+    real(dp), intent(in) ::TA, TB, S, k, x1, x2
 
-    real(8) :: P(n), Q(n)
-    real(8) :: den
-    real(8) ::  a(n), b(n), c(n), d(n)
+    real(dp) :: P(n), Q(n)
+    real(dp) :: inv_den, delta
+    real(dp) :: a(n), b(n), d(n)
     integer :: i
 
-    P = 0.d0
-    Q = 0.d0
+    delta = (x2-x1)/float(n-1)
+    b = 1.0d0/delta
+    a = b + b ! done
 
-    T(1) = TA
-    T(n) = TB
-    a = 0.0d0
-    d = 0.0d0
-
+    ! boundary conditions
     a(1) = 1.0d0
     a(n) = 1.0d0
-    c(1) = TA
-    c(n) = TB
+    b(1) = 0.0d0
+    b(n) = 0.0d0
+    T(1) = TA
+    T(n) = TB
+    Q(1) = TA
+    P(1) = 0.0d0
 
-    b = 1.0d0
-    c= 1.0d0
-
-    ! Preenchendo aP, aE e aW - inclui malhas não uniformes
-    do i = 2, n-1
-        b(i) = x(i) - x(i - 1)
-        c(i) = x(i + 1) - x(i)
-    end do
-
-    d = (b + c)*S*0.5d0/k
-    b = 1.0d0/b
-    c = 1.0d0/c
-    a = b + c
+    d = S * 0.5d0 * (delta  + delta) / k
+    d(1) = TA
+    d(n) = TB
 
     ! Looping para P e Q
     do i = 2, n
-        den = a(i) - c(i) * P(i - 1)
-        P(i) = b(i) / den
-        Q(i) = (Q(i - 1) * c(i) + d(i)) / den
+        inv_den = 1.0d0 /( a(i) - b(i) * P(i - 1))
+        P(i) = b(i) * inv_den
+        Q(i) = (Q(i - 1) * b(i) + d(i)) * inv_den
     end do
 
     ! Looping reverso para a temperatura
-    do i = n - 2, 1, -1
+    do i = n - 1, 2, -1
         T(i) = P(i) * T(i + 1) + Q(i)
     end do
 
     return
 end subroutine
+
+end module

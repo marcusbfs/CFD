@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import numba
-import fmodel
+from fmodel import fmodel
 import time
 import timeit
 
@@ -27,9 +27,6 @@ class SteadyHeatConduction1DWithUniformSource:
 
     def setPointsNumber(self, N: int):
         self.N = N
-        self.x = np.linspace(
-            0, self.L, self.N, dtype=np.float64
-        )  # posições igualmente espaçadas
 
     def setPointsDistance(self, l: float):
         self.N = int(self.L / l)
@@ -55,17 +52,17 @@ class SteadyHeatConduction1DWithUniformSource:
         self.TB = TB
 
     def solve(self):
-        self._updateAll()
         if self.use_fotran:
             self.solveFortran()
             return
 
+        self._updateAll()
         self.T = _finite_volume_ex(
-            self.x, self.a, self.b, self.c, self.d, self.TA, self.TB, self.S, self.k
+            0.0, self.L, self.TA, self.TB, self.S, self.k, self.N
         )
 
     def solveFortran(self):
-        self.T = fmodel.finite_volume_example(self.x, self.TA, self.TB, self.S, self.k)
+        self.T = fmodel.finite_volume_example(0.0, self.L, self.TA, self.TB, self.S, self.k, self.N)
 
 
     def setUseFortran(self, useFortran : bool) -> None:
@@ -94,6 +91,7 @@ class SteadyHeatConduction1DWithUniformSource:
         self.plot1D(True)
 
     def plot1D(self, plotExAnalytic=True):
+        self._updateXArray()
         fig, ax = plt.subplots()
         self._create1Dplot(fig, ax, plotExAnalytic)
 
@@ -185,12 +183,18 @@ class SteadyHeatConduction1DWithUniformSource:
         self.d[0] = self.TA
         self.d[n - 1] = self.TB
 
+    def _updateXArray(self):
+        self.x = np.linspace(
+            0, self.L, int(self.N), dtype=np.float64
+        )  # posições igualmente espaçadas
+
     def _updateArrays(self):
-        self.a = np.zeros(self.N, dtype=np.float64)
-        self.b = np.zeros(self.N, dtype=np.float64)
-        self.c = np.zeros(self.N, dtype=np.float64)
-        self.d = np.zeros(self.N, dtype=np.float64)
-        self.T = np.zeros(self.N, dtype=np.float64)
+        self._updateXArray()
+        self.a = np.zeros(int(self.N), dtype=np.float64)
+        self.b = np.zeros(int(self.N), dtype=np.float64)
+        self.c = np.zeros(int(self.N), dtype=np.float64)
+        self.d = np.zeros(int(self.N), dtype=np.float64)
+        self.T = np.zeros(int(self.N), dtype=np.float64)
 
     def _AnalyticExFunc(self, x: float):
         C1 = (self.TB - self.TA + self.S * self.L ** 2 * 0.5 / self.k) / self.L
@@ -202,44 +206,44 @@ class SteadyHeatConduction1DWithUniformSource:
 
 @numba.njit(
     numba.float64[:](
-        numba.float64[:],
-        numba.float64[:],
-        numba.float64[:],
-        numba.float64[:],
-        numba.float64[:],
         numba.float64,
         numba.float64,
         numba.float64,
         numba.float64,
+        numba.float64,
+        numba.float64,
+        numba.int64,
     )
 )
-def _finite_volume_ex(x, a, b, c, d, TA, TB, S, k):
-
-    n = len(a)
+def _finite_volume_ex(x1, x2, TA, TB, S, k, n):
 
     P = np.zeros(n, dtype=np.float64)
     Q = np.zeros(n, dtype=np.float64)
     T = np.zeros(n, dtype=np.float64)
 
-    P[0] = 0.0
-    Q[0] = TA
-    T[0] = TA
-    T[n - 1] = TB
+    delta = (x2 - x1) /float(n-1)
+    b = np.full(n, 1.0/delta, dtype=np.float64)
+    a = b + b
 
-    # Preenchendo aP, aE e aW - inclui malhas não uniformes
-    for i in range(1, n - 1):
-        delta_x_W = x[i] - x[i - 1]
-        delta_x_E = x[i + 1] - x[i]
-        b[i] = 1.0 / delta_x_E
-        c[i] = 1.0 / delta_x_W
-        a[i] = b[i] + c[i]
-        d[i] = S * 0.5 * (delta_x_E + delta_x_W) / k
+    # boundaries
+    a[0] = 1.
+    a[n-1] = 1.
+    b[0] = 0.
+    b[n-1] = 0.
+    T[0] = TA
+    T[n-1] = TB
+    Q[0] = TA
+    P[0] = 0.
+
+    d = np.full(n, S* 0.5 *(delta + delta) / k, dtype=np.float64)
+    d[0] = TA
+    d[n-1] = TB
 
     # Looping para P e Q
     for i in range(1, n):
-        den = a[i] - c[i] * P[i - 1]
-        P[i] = b[i] / den
-        Q[i] = (Q[i - 1] * c[i] + d[i]) / den
+        inv_den = 1.0 / ( a[i] - b[i] * P[i - 1])
+        P[i] = b[i] * inv_den
+        Q[i] = (Q[i - 1] * b[i] + d[i]) * inv_den
 
     # Looping reverso para a temperatura
     for i in range(n - 2, 0, -1):
@@ -251,8 +255,9 @@ def _finite_volume_ex(x, a, b, c, d, TA, TB, S, k):
 
 if __name__ == "__main__":
     m = SteadyHeatConduction1DWithUniformSource()
-    n = 100000000
+    n = 1.4e7
 
+    n = int(n)
     print("n = ", n)
     m.setPointsNumber(n)
 
@@ -260,9 +265,8 @@ if __name__ == "__main__":
     t0 = time.time()
     m.solve()
     t1 = time.time()
-    t_normal = t1 - t0
-
-    print("Time = {:.10f} ms".format(1e3*(t_normal)))
+    t_for = t1-t0
+    print("Time = {:.10f} ms".format(1e3*(t_for)))
 
     print("Solve Fortran")
     t0 = time.time()
@@ -271,3 +275,5 @@ if __name__ == "__main__":
     t_for = t1-t0
 
     print("Time = {:.10f} ms".format(1e3*(t_for)))
+
+    #m.plot1D()
