@@ -3,7 +3,7 @@ import numpy as np
 import time
 from model import SteadyHeatConduction1DWithUniformSource
 
-nruns = 1e4
+nruns = 1e3
 n = 1.4e4
 
 n = int(n)

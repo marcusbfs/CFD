@@ -1,9 +1,3 @@
-module types
-
-implicit none
-integer, parameter :: dp = kind(1.0d0)
-
-end module
 module fmodel
     contains
 pure subroutine finite_volume_example( x1, x2,TA, TB, S, k, T, n)
@@ -66,15 +60,15 @@ pure subroutine finite_volume_examplev2( x1, x2,TA, TB, S, k, T, n)
     delta = (x2-x1)/(n-1.0_dp)
     b = 1.0_dp/delta
     a = b + b
+    d = S * 0.5_dp * (delta  + delta) / k
 
     ! boundary conditions
     T(1) = TA
     T(n) = TB
-    Q(1) = TA
+
+    ! P(1) e Q(1)
     P(1) = 0.0_dp
-
-    d = S * 0.5_dp * (delta  + delta) / k
-
+    Q(1) = TA
     ! P(2) e Q(2)
     inv_den = 1.0_dp /(a)
     P(2) = b * inv_den
