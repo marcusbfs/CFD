@@ -1,3 +1,6 @@
 *.mod
 *.dll
 venvs/
+*.exe
+.vscode
+.vscode/*

@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numba
 from fmodel import fmodel
 import time
-import timeit
 
 
 class SteadyHeatConduction1DWithUniformSource:
@@ -63,6 +62,9 @@ class SteadyHeatConduction1DWithUniformSource:
 
     def solveFortran(self):
         self.T = fmodel.finite_volume_example(0.0, self.L, self.TA, self.TB, self.S, self.k, self.N)
+
+    def solveFortranV2(self):
+        self.T = fmodel.finite_volume_examplev2(0.0, self.L, self.TA, self.TB, self.S, self.k, self.N)
 
 
     def setUseFortran(self, useFortran : bool) -> None:
@@ -255,7 +257,7 @@ def _finite_volume_ex(x1, x2, TA, TB, S, k, n):
 
 if __name__ == "__main__":
     m = SteadyHeatConduction1DWithUniformSource()
-    n = 1.4e7
+    n = 1.43e1
 
     n = int(n)
     print("n = ", n)
@@ -275,5 +277,13 @@ if __name__ == "__main__":
     t_for = t1-t0
 
     print("Time = {:.10f} ms".format(1e3*(t_for)))
+    
+    print("Solve Fortran v2")
+    t0 = time.time()
+    m.solveFortranV2()
+    t1 = time.time()
+    t_for = t1-t0
 
-    #m.plot1D()
+    print("Time = {:.10f} ms".format(1e3*(t_for)))
+
+    m.plot1D()

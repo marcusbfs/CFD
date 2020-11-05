@@ -1,18 +1,12 @@
 module types
 
 implicit none
-integer, parameter :: sp = selected_real_kind(6,37) ! single precision
-integer, parameter :: dp = selected_real_kind(15,307) ! double precision
-
-real(sp) :: r_sp = 1.0
-real(dp) :: r_dp = 1.0_dp
+integer, parameter :: dp = kind(1.0d0)
 
 end module
-
-
 module fmodel
     contains
-subroutine finite_volume_example( x1, x2,TA, TB, S, k, T, n)
+pure subroutine finite_volume_example( x1, x2,TA, TB, S, k, T, n)
     use types
     implicit none
     integer, intent(in)   :: n
@@ -24,29 +18,76 @@ subroutine finite_volume_example( x1, x2,TA, TB, S, k, T, n)
     real(dp) :: a(n), b(n), d(n)
     integer :: i
 
-    delta = (x2-x1)/float(n-1)
-    b = 1.0d0/delta
+    delta = (x2-x1)/(n-1.0_dp)
+    b = 1.0_dp/delta
     a = b + b ! done
 
     ! boundary conditions
-    a(1) = 1.0d0
-    a(n) = 1.0d0
-    b(1) = 0.0d0
-    b(n) = 0.0d0
+    a(1) = 1.0_dp
+    a(n) = 1.0_dp
+    b(1) = 0.0_dp
+    b(n) = 0.0_dp
     T(1) = TA
     T(n) = TB
     Q(1) = TA
-    P(1) = 0.0d0
+    P(1) = 0.0_dp
 
-    d = S * 0.5d0 * (delta  + delta) / k
+    d = S * 0.5_dp * (delta  + delta) / k
     d(1) = TA
     d(n) = TB
 
     ! Looping para P e Q
     do i = 2, n
-        inv_den = 1.0d0 /( a(i) - b(i) * P(i - 1))
+        inv_den = 1.0_dp /( a(i) - b(i) * P(i - 1))
         P(i) = b(i) * inv_den
         Q(i) = (Q(i - 1) * b(i) + d(i)) * inv_den
+    end do
+
+    ! Looping reverso para a temperatura
+    do i = n - 1, 2, -1
+        T(i) = P(i) * T(i + 1) + Q(i)
+    end do
+
+    return
+end subroutine
+
+pure subroutine finite_volume_examplev2( x1, x2,TA, TB, S, k, T, n)
+    use types
+    implicit none
+    integer, intent(in)   :: n
+    real(dp), intent(out) :: T(n)
+    real(dp), intent(in) ::TA, TB, S, k, x1, x2
+
+    real(dp) :: P(n), Q(n)
+    real(dp) :: inv_den, delta
+    real(dp) :: b, d, a
+    integer :: i
+
+    delta = (x2-x1)/(n-1.0_dp)
+    b = 1.0_dp/delta
+    a = b + b
+
+    ! boundary conditions
+    T(1) = TA
+    T(n) = TB
+    Q(1) = TA
+    P(1) = 0.0_dp
+
+    d = S * 0.5_dp * (delta  + delta) / k
+
+    ! P(2) e Q(2)
+    inv_den = 1.0_dp /(a)
+    P(2) = b * inv_den
+    Q(2) = (Q(1) * b + d) * inv_den
+    ! P(n) e Q(n)
+    P(n) = 0.0_dp
+    Q(n) = 0.0_dp
+
+    ! Looping para P e Q
+    do i = 3, n-1
+        inv_den = 1.0_dp /( a - b * P(i - 1))
+        P(i) = b * inv_den
+        Q(i) = (Q(i - 1) * b + d) * inv_den
     end do
 
     ! Looping reverso para a temperatura
