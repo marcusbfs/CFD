@@ -7,7 +7,7 @@ program tester
     integer, PARAMETER :: n = 17
     real(dp), parameter :: x1 = 0.0_dp, x2 = 0.5_dp,  k = 1.0_dp, S =00.0_dp
     real(dp), PARAMETER :: TA = 100.0_dp, TB=500.0_dp
-    real(dp) :: T(n)
+    real(dp) :: T(n), T_v2(n)
     real(dp) :: h
     integer :: i
     CHARACTER(len=*), PARAMETER :: fmt_A_F = "(A7,f16.9)"
@@ -29,25 +29,10 @@ program tester
     print*, ""
 
     ! Call function
-    call finite_volume_example(x1, x2, TA, TB, S, k, T, n)
+    call steady1dheatconduction(x1, x2, TA, TB, S, k, T, n)
     print*, "V1"
-    call print_T()
-
-    T = 0.0_dp
-
-    ! Call function
-    print*,
-    print*, "V2"
-    call finite_volume_examplev2(x1, x2, TA, TB, S, k, T, n)
-    call print_T()
-
-    contains
-
-    subroutine print_T()
-        write(*,fmt_A_A) "L", "T"
-        do i=1, n
-            write(*,fmt_F_F) x1 + (i-1)*h, T(i)
-        enddo
-    end subroutine
-    
+    write(*,fmt_A_A) "L", "T"
+    do i=1, n
+        write(*,fmt_F_F) x1 + (i-1)*h, T(i)
+    enddo
 end program

@@ -1,7 +1,7 @@
 # Bibliotecas
 import numpy as np
 import matplotlib.pyplot as plt
-import numba
+# import numba
 from fmodel import fmodel
 import time
 
@@ -61,10 +61,7 @@ class SteadyHeatConduction1DWithUniformSource:
         )
 
     def solveFortran(self):
-        self.T = fmodel.finite_volume_example(0.0, self.L, self.TA, self.TB, self.S, self.k, self.N)
-
-    def solveFortranV2(self):
-        self.T = fmodel.finite_volume_examplev2(0.0, self.L, self.TA, self.TB, self.S, self.k, self.N)
+        self.T = fmodel.steady1dheatconduction(0.0, self.L, self.TA, self.TB, self.S, self.k, self.N)
 
 
     def setUseFortran(self, useFortran : bool) -> None:
@@ -206,17 +203,17 @@ class SteadyHeatConduction1DWithUniformSource:
 # ================================================================= #
 
 
-@numba.njit(
-    numba.float64[:](
-        numba.float64,
-        numba.float64,
-        numba.float64,
-        numba.float64,
-        numba.float64,
-        numba.float64,
-        numba.int64,
-    )
-)
+# @numba.njit(
+#     numba.float64[:](
+#         numba.float64,
+#         numba.float64,
+#         numba.float64,
+#         numba.float64,
+#         numba.float64,
+#         numba.float64,
+#         numba.int64,
+#     )
+# )
 def _finite_volume_ex(x1, x2, TA, TB, S, k, n):
 
     P = np.zeros(n, dtype=np.float64)
@@ -278,12 +275,4 @@ if __name__ == "__main__":
 
     print("Time = {:.10f} ms".format(1e3*(t_for)))
     
-    print("Solve Fortran v2")
-    t0 = time.time()
-    m.solveFortranV2()
-    t1 = time.time()
-    t_for = t1-t0
-
-    print("Time = {:.10f} ms".format(1e3*(t_for)))
-
     m.plot1D()

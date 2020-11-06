@@ -1,53 +1,8 @@
 module fmodel
+    use types
+    implicit none
     contains
-pure subroutine finite_volume_example( x1, x2,TA, TB, S, k, T, n)
-    use types
-    implicit none
-    integer, intent(in)   :: n
-    real(dp), intent(out) :: T(n)
-    real(dp), intent(in) ::TA, TB, S, k, x1, x2
-
-    real(dp) :: P(n), Q(n)
-    real(dp) :: inv_den, delta
-    real(dp) :: a(n), b(n), d(n)
-    integer :: i
-
-    delta = (x2-x1)/(n-1.0_dp)
-    b = 1.0_dp/delta
-    a = b + b ! done
-
-    ! boundary conditions
-    a(1) = 1.0_dp
-    a(n) = 1.0_dp
-    b(1) = 0.0_dp
-    b(n) = 0.0_dp
-    T(1) = TA
-    T(n) = TB
-    Q(1) = TA
-    P(1) = 0.0_dp
-
-    d = S * 0.5_dp * (delta  + delta) / k
-    d(1) = TA
-    d(n) = TB
-
-    ! Looping para P e Q
-    do i = 2, n
-        inv_den = 1.0_dp /( a(i) - b(i) * P(i - 1))
-        P(i) = b(i) * inv_den
-        Q(i) = (Q(i - 1) * b(i) + d(i)) * inv_den
-    end do
-
-    ! Looping reverso para a temperatura
-    do i = n - 1, 2, -1
-        T(i) = P(i) * T(i + 1) + Q(i)
-    end do
-
-    return
-end subroutine
-
-pure subroutine finite_volume_examplev2( x1, x2,TA, TB, S, k, T, n)
-    use types
-    implicit none
+pure subroutine steady1dheatconduction( x1, x2,TA, TB, S, k, T, n)
     integer, intent(in)   :: n
     real(dp), intent(out) :: T(n)
     real(dp), intent(in) ::TA, TB, S, k, x1, x2
@@ -57,10 +12,10 @@ pure subroutine finite_volume_examplev2( x1, x2,TA, TB, S, k, T, n)
     real(dp) :: b, d, a
     integer :: i
 
-    delta = (x2-x1)/(n-1.0_dp)
-    b = 1.0_dp/delta
+    delta = (x2 - x1)/(n - 1.0_dp)
+    b = 1.0_dp / delta
     a = b + b
-    d = S * 0.5_dp * (delta  + delta) / k
+    d = S * 0.5_dp * (delta + delta) / k
 
     ! boundary conditions
     T(1) = TA

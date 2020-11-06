@@ -2,6 +2,7 @@
 *.o
 *.dll
 venvs/
+cfd_venv/
 *.exe
 .vscode
 .vscode/*
